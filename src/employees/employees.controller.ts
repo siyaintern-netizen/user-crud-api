@@ -8,7 +8,8 @@ import {
   Param,
 } from '@nestjs/common';
 import { EmployeesService } from './employees.service';
-import { Employee } from './employee.entity';
+import { CreateEmployeeDto } from './dto/create-employee.dto';
+import { UpdateEmployeeDto } from './dto/update-employee.dto';
 
 @Controller('employees')
 export class EmployeesController {
@@ -20,8 +21,8 @@ export class EmployeesController {
   }
 
   @Post()
-  createEmployee(@Body() employeeData: Partial<Employee>) {
-    return this.employeesService.create(employeeData);
+  createEmployee(@Body() createEmployeeDto: CreateEmployeeDto) {
+    return this.employeesService.create(createEmployeeDto);
   }
 
   @Get(':id')
@@ -32,9 +33,9 @@ export class EmployeesController {
   @Put(':id')
   updateEmployee(
     @Param('id') id: string,
-    @Body() employeeData: Partial<Employee>,
+    @Body() updateEmployeeDto: UpdateEmployeeDto,
   ) {
-    return this.employeesService.update(Number(id), employeeData);
+    return this.employeesService.update(Number(id), updateEmployeeDto);
   }
 
   @Delete(':id')
