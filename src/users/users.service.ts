@@ -1,57 +1,53 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { User } from './user.entity';
 import { UsersServiceInterface } from './interface/user-service.interface';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { FindAllUsersUseCase } from './use-cases/find-all-users.use-case';
+import { CreateUserUseCase } from './use-cases/create-user.use-case';
+import { FindOneUserUseCase } from './use-cases/find-one-user.use-case';
+import { UpdateUserUseCase } from './use-cases/update-user.use-case';
+import { DeleteUserUseCase } from './use-cases/delete-user.use-case';
+import { LeftJoinUsersUseCase } from './use-cases/left-join-users.use-case';
+import { InnerJoinUsersUseCase } from './use-cases/inner-join-users.use-case';
 
 @Injectable()
 export class UsersService implements UsersServiceInterface {
   constructor(
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
+    private readonly findAllUsersUseCase: FindAllUsersUseCase,
+    private readonly createUserUseCase: CreateUserUseCase,
+    private readonly findOneUserUseCase: FindOneUserUseCase,
+    private readonly updateUserUseCase: UpdateUserUseCase,
+    private readonly deleteUserUseCase: DeleteUserUseCase,
+    private readonly leftJoinUsersUseCase: LeftJoinUsersUseCase,
+    private readonly innerJoinUsersUseCase: InnerJoinUsersUseCase,
   ) {}
 
   findAll(): Promise<User[]> {
-    return this.userRepository.find({ relations: { employees: true } });
+    return this.findAllUsersUseCase.execute();
   }
 
   create(createUserDto: CreateUserDto): Promise<User> {
-    const user = this.userRepository.create(createUserDto);
-    return this.userRepository.save(user);
+    return this.createUserUseCase.execute(createUserDto);
   }
 
   findOne(id: number): Promise<User | null> {
-    return this.userRepository.findOne({
-      where: { id },
-      relations: { employees: true },
-    });
+    return this.findOneUserUseCase.execute(id);
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<User|null> {
-    await this.userRepository.update(id, updateUserDto);
-    return this.findOne(id);
+  async update(id: number, updateUserDto: UpdateUserDto): Promise<User | null> {
+    return this.updateUserUseCase.execute(id, updateUserDto);
   }
 
   async remove(id: number): Promise<void> {
-    await this.userRepository.delete(id);
+    return this.deleteUserUseCase.execute(id);
   }
 
-  // Fetch users together with their employees using a LEFT JOIN.
   getUsersWithEmployeesLeftJoin(): Promise<User[]> {
-    return this.userRepository
-      .createQueryBuilder('user')
-      .leftJoinAndSelect('user.employees', 'employee')
-      .getMany();
+    return this.leftJoinUsersUseCase.execute();
   }
 
-  // Fetch users together with their employees using an INNER JOIN.
-  // Unlike LEFT JOIN, INNER JOIN returns only users that have at least one employee.
   getUsersWithEmployeesInnerJoin(): Promise<User[]> {
-    return this.userRepository
-      .createQueryBuilder('user')
-      .innerJoinAndSelect('user.employees', 'employee')
-      .getMany();
+    return this.innerJoinUsersUseCase.execute();
   }
 }
